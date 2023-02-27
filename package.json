@@ -2,7 +2,8 @@
   "name": "@hexlet/code",
   "version": "1.0.0",
   "description": "third hexlet project",
-  "main": "src/index.js",
+  "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -29,6 +30,7 @@
     "eslint-plugin-import": "^2.27.5",
     "html-webpack-plugin": "^5.5.0",
     "mini-css-extract-plugin": "^2.7.2",
+    "on-change": "^4.0.2",
     "postcss-loader": "^7.0.2",
     "prettier": "^2.8.4",
     "style-loader": "^3.3.1",
