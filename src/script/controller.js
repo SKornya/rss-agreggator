@@ -1,18 +1,17 @@
 import onChange from 'on-change';
-import render from './view.js';
+import { errorRender } from './view.js';
 
 const state = {
-  status: 'invalid',
-  feeds: [],
-  errors: [],
+  feeds: ['https://ru.hexlet.io/lessons.rss'],
+  error: '',
 };
 
-const watchedState = onChange(state, (path, value, prevValue) => {
-  // console.log(path, value, prevValue);
-  if (path === 'errors') {
-    console.log(value);
+const watchedState = onChange(state, (path, value) => {
+  const classes = ['feedback', 'm-0', 'position-absolute', 'small', 'text-success'];
+  if (path === 'error') {
+    classes.push('text-danger');
   }
-  render(state);
+  errorRender(classes, value.message);
 });
 
 export default watchedState;
