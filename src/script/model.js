@@ -1,12 +1,20 @@
 import * as yup from 'yup';
+import * as i18next from 'i18next';
 // import axios from 'axios';
 import watchedState from './controller.js';
+
+yup.setLocale({
+  string: {
+    url: 'Ссылка должна быть валидным URL',
+    notOneOf: 'RSS уже существует',
+  },
+});
 
 const validateSchema = yup.string()
   .trim()
   .url()
-  .required()
-  .notOneOf(watchedState.feeds);
+  .notOneOf(watchedState.feeds)
+  .required();
 
 const validate = (url) => {
   validateSchema.validate(url)
@@ -14,7 +22,7 @@ const validate = (url) => {
       watchedState.feeds.push(url);
     })
     .catch((err) => {
-      watchedState.error = err;
+      watchedState.error = err.message;
     });
 };
 
