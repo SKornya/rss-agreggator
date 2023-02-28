@@ -7,11 +7,10 @@ const state = {
 };
 
 const watchedState = onChange(state, (path, value) => {
-  const classes = ['feedback', 'm-0', 'position-absolute', 'small', 'text-success'];
   if (path === 'error') {
-    classes.push('text-danger');
+    const classes = ['feedback', 'm-0', 'position-absolute', 'small', 'text-success', 'text-danger'];
+    errorRender(classes, value);
   }
-  errorRender(classes, value.message);
 });
 
 export default watchedState;
