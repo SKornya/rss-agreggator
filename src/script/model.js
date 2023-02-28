@@ -1,6 +1,5 @@
 import * as yup from 'yup';
-import axios from 'axios';
-// import { keyBy } from 'lodash';
+// import axios from 'axios';
 import watchedState from './controller.js';
 
 const validateSchema = yup.string()
@@ -11,18 +10,11 @@ const validateSchema = yup.string()
 
 const validate = (url) => {
   validateSchema.validate(url)
-    .then((result) => {
-      axios.get(url)
-        .then((response) => {
-          console.log(response.status);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-      watchedState.feeds.push(result);
+    .then(() => {
+      watchedState.feeds.push(url);
     })
     .catch((err) => {
-      watchedState.errors.push(err);
+      watchedState.error = err;
     });
 };
 
@@ -32,7 +24,7 @@ export default () => {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const t = new FormData(form).get('url');
-    console.log(t);
     validate(t);
+    form.reset();
   });
 };
