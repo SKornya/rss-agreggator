@@ -1,8 +1,9 @@
 import * as yup from 'yup';
 import * as i18next from 'i18next';
-// import axios from 'axios';
+import axios from 'axios';
 import watchedState from './controller.js';
 import resources from './locale/resources.js';
+import parseData from './parser.js';
 
 yup.setLocale({
   string: {
@@ -22,13 +23,19 @@ const validateSchema = yup.string()
 const app = (i18n) => {
   const validate = (url) => {
     validateSchema.validate(url)
-      .then(() => {
+      .then((res) => {
         watchedState.feeds.push(url);
+        axios.get(url)
+          .then(({ data }) => {
+            const htmlData = parseData(data);
+            console.log(htmlData);
+          })
+          .catch((e) => console.log(e));
       })  
       .catch((err) => {
         const [error] = err.errors;
         const { key } = error;
-        state.error = i18n.t(key);
+        watchedState.error = i18n.t(key);
       });
   };
 
@@ -39,6 +46,7 @@ const app = (i18n) => {
     const t = new FormData(form).get('url');
     validate(t);
     form.reset();
+    form.focus();
   });
 };
 
