@@ -2,14 +2,14 @@ import * as yup from 'yup';
 import * as i18next from 'i18next';
 // import axios from 'axios';
 import watchedState from './controller.js';
-import resources from '.src'
+import resources from './locale/resources.js';
 
 yup.setLocale({
   string: {
-    url: 'Ссылка должна быть валидным URL',
+    url: ({ url }) => ({ key: 'notValidURL', values: { url } }),
   },
   mixed: {
-    notOneOf: 'RSS уже существует',
+    notOneOf: ({ notOneOf }) => ({ key: 'oneOfFeeds', values: { notOneOf } }),
   },
 });
 
@@ -19,17 +19,19 @@ const validateSchema = yup.string()
   .notOneOf(watchedState.feeds)
   .required();
 
-const validate = (url) => {
-  validateSchema.validate(url)
-    .then(() => {
-      watchedState.feeds.push(url);
-    })
-    .catch((err) => {
-      watchedState.error = err.message;
-    });
-};
+const app = (i18n) => {
+  const validate = (url) => {
+    validateSchema.validate(url)
+      .then(() => {
+        watchedState.feeds.push(url);
+      })  
+      .catch((err) => {
+        const [error] = err.errors;
+        const { key } = error;
+        state.error = i18n.t(key);
+      });
+  };
 
-const app = () => {
   const form = document.querySelector('form');
 
   form.addEventListener('submit', (e) => {
@@ -46,5 +48,6 @@ export default () => {
     lng: 'ru',
     resources,
   });
+
   app(i18nInstance);
 };
