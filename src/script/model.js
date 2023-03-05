@@ -2,15 +2,21 @@ import * as yup from 'yup';
 import * as i18next from 'i18next';
 import axios from 'axios';
 import getWatchedState from './view.js';
-// import watchedState from './view.js';
 import resources from './locale/resources.js';
 import parseData from './parser.js';
 import { get } from 'lodash';
 
+export const i18n = i18next.createInstance();
+  i18n.init({
+    lng: 'ru',
+    resources,
+  });
+
 const app = (i18n) => {
   const state = {
-    urls: ['https://ru.hexlet.io/lessons.rss'],
+    urls: [],
     error: '',
+    feedback: '',
   };
 
   const watchedState = getWatchedState(state);
@@ -23,29 +29,29 @@ const app = (i18n) => {
       notOneOf: ({ notOneOf }) => ({ key: 'oneOfFeeds', values: { notOneOf } }),
     },
   });
-  
-  const validateSchema = yup.string()
-    .trim()
-    .url()
-    .notOneOf(state.urls)
-    .required();
 
   const validate = (url) => {
+    const validateSchema = yup.string()
+    .trim()
+    .url()
+    .notOneOf(watchedState.urls)
+    .required();
+
     validateSchema.validate(url)  
       .then((res) => {
+        watchedState.feedback = 'successLoad';
         watchedState.urls.push(url);
         // axios.get(url)
         //   .then(({ data }) => {
-        //     const htmlData = parseData(data);
+        //     const htmlData = parseData(data); 
         //     console.log(htmlData);
         //   })
         //   .catch((e) => console.log(e));
       })
       .catch((err) => {
-        console.log(err);
         const [error] = err.errors;
         const { key } = error;
-        watchedState.error = i18n.t(key);
+        watchedState.feedback = key;
       });
   };
 
@@ -61,11 +67,5 @@ const app = (i18n) => {
 };
 
 export default () => {
-  const i18nInstance = i18next.createInstance();
-  i18nInstance.init({
-    lng: 'ru',
-    resources,
-  });
-
-  app(i18nInstance);
+  app(i18n);
 };
