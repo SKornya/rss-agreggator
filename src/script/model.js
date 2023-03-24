@@ -1,23 +1,19 @@
 import * as yup from 'yup';
-import * as i18next from 'i18next';
-import axios from 'axios';
-import getWatchedState from './view.js';
-import resources from './locale/resources.js';
-import parseData from './parser.js';
-import { get } from 'lodash';
+// import axios from 'axios';
+import getWatchedState, { init } from './view.js';
+// import parseData from './parser.js';
 
-export const i18n = i18next.createInstance();
-  i18n.init({
-    lng: 'ru',
-    resources,
-  });
-
-const app = (i18n) => {
+const app = () => {
   const state = {
+    form: {
+      state: '',
+      message: '',
+    },
     urls: [],
-    error: '',
-    feedback: '',
+    // feedback: '',
   };
+
+  init();
 
   const watchedState = getWatchedState(state);
 
@@ -32,18 +28,19 @@ const app = (i18n) => {
 
   const validate = (url) => {
     const validateSchema = yup.string()
-    .trim()
-    .url()
-    .notOneOf(watchedState.urls)
-    .required();
+      .trim()
+      .url()
+      .notOneOf(watchedState.urls)
+      .required();
 
-    validateSchema.validate(url)  
-      .then((res) => {
-        watchedState.feedback = 'successLoad';
-        watchedState.urls.push(url);
+    validateSchema.validate(url)
+      .then(() => {
+        state.form.message = 'successLoad';
+        state.urls.push(url);
+        watchedState.form.state = 'success';
         // axios.get(url)
         //   .then(({ data }) => {
-        //     const htmlData = parseData(data); 
+        //     const htmlData = parseData(data);
         //     console.log(htmlData);
         //   })
         //   .catch((e) => console.log(e));
@@ -51,7 +48,8 @@ const app = (i18n) => {
       .catch((err) => {
         const [error] = err.errors;
         const { key } = error;
-        watchedState.feedback = key;
+        state.form.message = key;
+        watchedState.form.state = 'error';
       });
   };
 
@@ -67,5 +65,5 @@ const app = (i18n) => {
 };
 
 export default () => {
-  app(i18n);
+  app();
 };
