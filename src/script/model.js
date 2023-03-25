@@ -1,7 +1,9 @@
 import * as yup from 'yup';
-// import axios from 'axios';
-import getWatchedState, { init } from './view.js';
-// import parseData from './parser.js';
+import axios from 'axios';
+import getWatchedState, { mainPageRender } from './view.js';
+import parseData from './parser.js';
+
+const getOriginURL = (url) => `https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}`;
 
 const app = () => {
   const state = {
@@ -13,7 +15,7 @@ const app = () => {
     // feedback: '',
   };
 
-  init();
+  mainPageRender();
 
   const watchedState = getWatchedState(state);
 
@@ -35,21 +37,31 @@ const app = () => {
 
     validateSchema.validate(url)
       .then(() => {
-        state.form.message = 'successLoad';
-        state.urls.push(url);
-        watchedState.form.state = 'success';
-        // axios.get(url)
-        //   .then(({ data }) => {
-        //     const htmlData = parseData(data);
-        //     console.log(htmlData);
-        //   })
-        //   .catch((e) => console.log(e));
+        // setInterval(() => {
+        axios.get(getOriginURL(url))
+          .then((response) => {
+            const htmlData = parseData(response.data.contents);
+            if (!(htmlData.tagName === 'rss')) {
+              state.form.message = 'notRSS';
+              watchedState.form.state = 'error';
+              state.form.state = '';
+              return;
+            }
+            state.form.message = 'successLoad';
+            state.urls.push(url);
+            watchedState.form.state = 'success';
+            state.form.state = '';
+            console.log(htmlData);
+          })
+          .catch((e) => console.log(e));
+        // }, 5000);
       })
       .catch((err) => {
         const [error] = err.errors;
         const { key } = error;
         state.form.message = key;
         watchedState.form.state = 'error';
+        state.form.state = '';
       });
   };
 
