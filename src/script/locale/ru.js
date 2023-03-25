@@ -7,11 +7,14 @@ export default {
       addButton: 'Добавить',
       example: 'Пример: https://ru.hexlet.io/lessons.rss',
     },
-    errors: {
+    error: {
       notValidURL: 'Ссылка должна быть валидным URL',
       oneOfFeeds: 'RSS уже существует',
       networkError: 'Что-то пошло не так',
+      notRSS: 'Ссылка не явлется RSS',
     },
-    successLoad: 'RSS успешно загружен',
+    success: {
+      successLoad: 'RSS успешно загружен',
+    },
   },
 };
