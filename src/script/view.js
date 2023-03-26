@@ -44,10 +44,96 @@ const feedbackRender = (value, type) => {
   feedback.textContent = i18n.t(`${type}.${value}`);
 };
 
+const containersRender = () => {
+  const cardRender = (blockName) => {
+    const card = document.createElement('div');
+    card.classList.add('card', 'border-0');
+
+    const cardBody = document.createElement('div');
+    cardBody.classList.add('card-body');
+    const cardHeader = document.createElement('h2');
+    cardHeader.classList.add('card-title', 'h4');
+    cardHeader.textContent = i18n.t(`${blockName}`);
+    cardBody.append(cardHeader);
+
+    const list = document.createElement('ul');
+    list.classList.add('list-group', 'border-0', 'rounded-0');
+
+    card.append(cardBody, list);
+    return card;
+  };
+
+  const postsPart = document.querySelector('.posts');
+  const feedsPart = document.querySelector('.feeds');
+  postsPart.append(cardRender('posts'));
+  feedsPart.append(cardRender('feeds'));
+};
+
+const feedsRender = (feeds, posts) => {
+  const addButton = document.querySelector('button[aria-label="add"]');
+  addButton.disabled = true;
+
+  const postsList = document.querySelector('.posts .card ul');
+  const feedsList = document.querySelector('.feeds .card ul');
+
+  postsList.innerHTML = '';
+  feedsList.innerHTML = '';
+
+  feeds.forEach((feed) => {
+    const li = document.createElement('li');
+    li.classList.add('list-group-item', 'border-0', 'border-end-0');
+    const feedHeader = document.createElement('h3');
+    feedHeader.classList.add('h6', 'm-0');
+    feedHeader.textContent = feed.title;
+    const feedDescription = document.createElement('p');
+    feedDescription.classList.add('m-0', 'small', 'text-black-50');
+    feedDescription.textContent = feed.description;
+
+    li.append(feedHeader, feedDescription);
+    feedsList.prepend(li);
+  });
+
+  posts.forEach((feedPosts) => {
+    feedPosts.forEach((post) => {
+      const li = document.createElement('li');
+      li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
+
+      const a = document.createElement('a');
+      a.classList.add('fw-bold');
+      a.setAttribute('href', post.link);
+      a.setAttribute('data-id', post.postId);
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener norefferer');
+      a.textContent = post.title;
+
+      const button = document.createElement('button');
+      button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
+      button.setAttribute('type', 'button');
+      button.setAttribute('data-id', post.postId);
+      button.setAttribute('data-bs-toggle', 'modal');
+      button.setAttribute('data-bs-target', '#modal');
+      button.textContent = i18n.t('watchButton');
+      li.append(a, button);
+      postsList.append(li);
+    });
+  });
+  addButton.disabled = false;
+};
+
 export default (state) => {
   const watchedState = onChange(state, (path, value) => {
-    if (path === 'form.state') {
-      feedbackRender(state.form.message, value);
+    switch (path) {
+      case 'form.status':
+        feedbackRender(state.form.message, value);
+        break;
+      case 'status':
+        if (!document.querySelector('.feeds .card ul')) {
+          containersRender();
+        }
+        feedsRender(state.urls, state.posts);
+        break;
+      default:
+        throw new Error('unknow path');
     }
   });
 
