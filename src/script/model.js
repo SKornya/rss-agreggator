@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import * as yup from 'yup';
-import _ from 'lodash';
+import _, { update } from 'lodash';
 import axios from 'axios';
 import getWatchedState, { mainPageRender } from './view.js';
 import parseData from './parser.js';
@@ -21,17 +21,43 @@ export default () => {
   const watchedState = getWatchedState(state);
   mainPageRender();
 
-  const getRequest = (url) => {
-    axios.get(getOriginURL(url))
+  const updateRSS = (url) => {
+    axios.get(getOriginURL(url.trim()))
       .then((response) => {
-        console.log(response.status);
+        const [feed, posts] = parseData(response.data.contents);
+        const feedId = state.feeds.find((item) => item.link === feed.link).id;
+        posts.forEach((post) => {
+          post.id = _.uniqueId();
+          post.feedId = feedId;
+        });
+        watchedState.posts = [...posts, ...state.posts];
+      })
+      .catch((err) => {
+        if (!(_.has(err, 'errors'))) {
+          watchedState.form.error = 'networkError';
+        } else {
+          watchedState.form.error = 'parsererror';
+        }
+        watchedState.proceedState = 'failed';
+      });
+    setTimeout(updateRSS, 5000, url);
+  };
+
+  const getRequest = (url) => {
+    axios.get(getOriginURL(url.trim()))
+      .then((response) => {
         const [feed, posts] = parseData(response.data.contents);
         watchedState.proceedState = 'loaded';
         watchedState.urls.push(url);
         feed.id = _.uniqueId();
         const feedId = feed.id;
-        console.log(feed);
         watchedState.feeds.push(feed);
+        posts.forEach((post) => {
+          post.id = _.uniqueId();
+          post.feedId = feedId;
+        });
+        watchedState.posts = [...posts, ...state.posts];
+        updateRSS(url);
       })
       .catch((err) => {
         if (!(_.has(err, 'errors'))) {

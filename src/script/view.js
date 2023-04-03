@@ -37,11 +37,11 @@ const feedbackRender = (value, type = 'loaded') => {
     case 'error':
       feedback.classList.replace('text-success', 'text-danger');
       break;
-    case 'success':
+    case 'loaded':
       feedback.classList.replace('text-danger', 'text-success');
       break;
     default:
-      throw new Error('unknow state');
+      break;
   }
   feedback.textContent = i18n.t(`${type}.${value}`);
 };
@@ -71,15 +71,13 @@ const containersRender = () => {
   feedsPart.append(cardRender('feeds'));
 };
 
-const feedsRender = (feeds, posts) => {
+const feedsRender = (feeds) => {
+  const feedsContainer = document.querySelector('.feeds ul');
+  feedsContainer.innerHTML = '';
+
   const addButton = document.querySelector('button[aria-label="add"]');
   addButton.disabled = true;
-
-  const postsList = document.querySelector('.posts .card ul');
   const feedsList = document.querySelector('.feeds .card ul');
-
-  postsList.innerHTML = '';
-  feedsList.innerHTML = '';
 
   feeds.forEach((feed) => {
     const li = document.createElement('li');
@@ -95,54 +93,61 @@ const feedsRender = (feeds, posts) => {
     feedsList.prepend(li);
   });
 
-  posts.forEach((feedPosts) => {
-    feedPosts.forEach((post) => {
-      const li = document.createElement('li');
-      li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
+  addButton.disabled = false;
+};
 
-      const a = document.createElement('a');
-      a.classList.add('fw-bold');
-      a.setAttribute('href', post.link);
-      a.setAttribute('data-id', post.postId);
-      a.setAttribute('target', '_blank');
-      a.setAttribute('rel', 'noopener norefferer');
-      a.textContent = post.title;
+const postsRender = (posts) => {
+  const postsContainer = document.querySelector('.posts ul');
+  postsContainer.innerHTML = '';
 
-      const button = document.createElement('button');
-      button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
-      button.setAttribute('type', 'button');
-      button.setAttribute('data-id', post.postId);
-      button.setAttribute('data-bs-toggle', 'modal');
-      button.setAttribute('data-bs-target', '#modal');
-      button.textContent = i18n.t('watchButton');
-      li.append(a, button);
-      postsList.append(li);
-    });
+  const addButton = document.querySelector('button[aria-label="add"]');
+  addButton.disabled = true;
+
+  const postsList = document.querySelector('.posts .card ul');
+
+  posts.forEach((post) => {
+    const li = document.createElement('li');
+    li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
+
+    const a = document.createElement('a');
+    a.classList.add('fw-bold');
+    a.setAttribute('href', post.link);
+    a.setAttribute('data-id', post.postId);
+    a.setAttribute('target', '_blank');
+    a.setAttribute('rel', 'noopener norefferer');
+    a.textContent = post.title;
+
+    const button = document.createElement('button');
+    button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
+    button.setAttribute('type', 'button');
+    button.setAttribute('data-id', post.postId);
+    button.setAttribute('data-bs-toggle', 'modal');
+    button.setAttribute('data-bs-target', '#modal');
+    button.textContent = i18n.t('watchButton');
+    li.append(a, button);
+    postsList.append(li);
   });
+
   addButton.disabled = false;
 };
 
 export default (state) => {
   const watchedState = onChange(state, (path, value) => {
-    console.log(path);
     switch (path) {
       case 'proceedState':
         if (value === 'loaded') {
-          console.log('loaded');
+          feedbackRender('success');
+          containersRender();
         }
         if (value === 'failed') {
           feedbackRender(state.form.error, 'error');
         }
         break;
       case 'feeds':
-        feedbackRender('success');
-        // feedsRender();
+        feedsRender(state.feeds);
         break;
       case 'posts':
-        if (!document.querySelector('.feeds .card ul')) {
-          containersRender();
-        }
-        feedsRender(state.urls, state.posts);
+        postsRender(state.posts);
         break;
       default:
         break;
