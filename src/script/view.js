@@ -25,18 +25,20 @@ export const mainPageRender = () => {
   input.setAttribute('placeholder', i18n.t('init.placeholder'));
 };
 
-const feedbackRender = (value, type) => {
+// const errorRender = (errorText) => {
+//   const feedback = document.querySelector('.feedback');
+//   feedback.classList.replace('text-success', 'text-danger');
+//   feedback.textContent = i18n.t(`error.${errorText}`);
+// };
+
+const feedbackRender = (value, type = 'loaded') => {
   const feedback = document.querySelector('.feedback');
   switch (type) {
     case 'error':
-      if (feedback.classList.contains('text-success')) {
-        feedback.classList.replace('text-success', 'text-danger');
-      }
+      feedback.classList.replace('text-success', 'text-danger');
       break;
     case 'success':
-      if (feedback.classList.contains('text-danger')) {
-        feedback.classList.replace('text-danger', 'text-success');
-      }
+      feedback.classList.replace('text-danger', 'text-success');
       break;
     default:
       throw new Error('unknow state');
@@ -122,18 +124,28 @@ const feedsRender = (feeds, posts) => {
 
 export default (state) => {
   const watchedState = onChange(state, (path, value) => {
+    console.log(path);
     switch (path) {
-      case 'form.status':
-        feedbackRender(state.form.message, value);
+      case 'proceedState':
+        if (value === 'loaded') {
+          console.log('loaded');
+        }
+        if (value === 'failed') {
+          feedbackRender(state.form.error, 'error');
+        }
         break;
-      case 'status':
+      case 'feeds':
+        feedbackRender('success');
+        // feedsRender();
+        break;
+      case 'posts':
         if (!document.querySelector('.feeds .card ul')) {
           containersRender();
         }
         feedsRender(state.urls, state.posts);
         break;
       default:
-        throw new Error('unknow path');
+        break;
     }
   });
 

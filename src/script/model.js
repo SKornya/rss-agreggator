@@ -1,71 +1,47 @@
 /* eslint-disable no-unused-vars */
 import * as yup from 'yup';
+import _ from 'lodash';
 import axios from 'axios';
 import getWatchedState, { mainPageRender } from './view.js';
 import parseData from './parser.js';
 
 const getOriginURL = (url) => `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
 
-const app = () => {
+export default () => {
   const state = {
+    proceedState: 'filling',
     form: {
-      status: '',
-      message: '',
+      error: '',
     },
-    status: '',
     urls: [],
+    feeds: [],
     posts: [],
   };
 
   const watchedState = getWatchedState(state);
+  mainPageRender();
 
   const getRequest = (url) => {
     axios.get(getOriginURL(url))
       .then((response) => {
-        const parsingData = parseData(response.data.contents);
-        if (!(parsingData.tagName === 'rss')) {
-          state.form.message = 'notRSS';
-          watchedState.form.status = 'error';
-          state.form.status = '';
-          return;
-        }
-        state.form.message = 'successLoad';
-        watchedState.form.status = 'success';
-        state.form.status = '';
-
-        watchedState.status = 'loaded';
-
-        const title = parsingData.querySelector('channel title').textContent;
-        const description = parsingData.querySelector('channel description').textContent;
-
-        state.urls.push({
-          id: state.urls.length + 1,
-          url,
-          title,
-          description,
-        });
-
-        const feedPosts = [];
-        const currentId = state.urls.at(-1).id;
-        const items = parsingData.querySelectorAll('item')
-          .forEach((item, index) => feedPosts.push({
-            id: currentId,
-            postId: index + 1,
-            title: item.querySelector('title').textContent,
-            description: item.querySelector('description').textContent,
-            link: item.querySelector('link').textContent,
-          }));
-        state.posts.unshift(feedPosts);
-        watchedState.status = 'readyToRender';
+        console.log(response.status);
+        const [feed, posts] = parseData(response.data.contents);
+        watchedState.proceedState = 'loaded';
+        watchedState.urls.push(url);
+        feed.id = _.uniqueId();
+        const feedId = feed.id;
+        console.log(feed);
+        watchedState.feeds.push(feed);
       })
-      .catch(() => {
-        state.form.message = 'networkError';
-        watchedState.form.status = 'error';
+      .catch((err) => {
+        if (!(_.has(err, 'errors'))) {
+          watchedState.form.error = 'networkError';
+        } else {
+          watchedState.form.error = 'parsererror';
+        }
+        watchedState.proceedState = 'failed';
       });
-    setTimeout(() => getRequest(url), 5000);
   };
-
-  mainPageRender();
 
   yup.setLocale({
     string: {
@@ -76,23 +52,23 @@ const app = () => {
     },
   });
 
-  const validate = (url) => {
+  const validate = (url, urls) => {
     const validateSchema = yup.string()
       .trim()
       .url()
-      .notOneOf(watchedState.urls.map((item) => item.url))
+      .notOneOf(urls)
       .required();
 
     validateSchema.validate(url)
       .then(() => {
+        watchedState.proceedState = 'loading';
         getRequest(url);
       })
       .catch((err) => {
         const [error] = err.errors;
         const { key } = error;
-        state.form.message = key;
-        watchedState.form.status = 'error';
-        state.form.status = '';
+        watchedState.form.error = key;
+        watchedState.proceedState = 'failed';
       });
   };
 
@@ -100,13 +76,10 @@ const app = () => {
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
+    watchedState.proceedState = 'filling';
     form.focus();
-    const t = new FormData(form).get('url');
-    validate(t);
+    const url = new FormData(form).get('url');
+    validate(url, state.urls);
     form.reset();
   });
-};
-
-export default () => {
-  app();
 };

@@ -11,10 +11,10 @@ export default {
       notValidURL: 'Ссылка должна быть валидным URL',
       oneOfFeeds: 'RSS уже существует',
       networkError: 'Что-то пошло не так',
-      notRSS: 'Ссылка не явлется RSS',
+      parsererror: 'Ссылка не явлется RSS',
     },
-    success: {
-      successLoad: 'RSS успешно загружен',
+    loaded: {
+      success: 'RSS успешно загружен',
     },
     posts: 'Посты',
     feeds: 'Фиды',
