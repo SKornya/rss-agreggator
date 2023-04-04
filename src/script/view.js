@@ -67,10 +67,6 @@ const modalRender = (post) => {
   body.classList.add('modal-open');
   body.setAttribute('style', 'overflow: hidden; padding-right: 0px;');
 
-  const modalBackDrop = document.createElement('div');
-  modalBackDrop.classList.add('modal-backdrop', 'fade', 'show');
-  body.append(modalBackDrop);
-
   const modal = document.querySelector('.modal');
   modal.classList.add('show');
   modal.setAttribute('style', 'block');
@@ -86,10 +82,6 @@ const modalRender = (post) => {
 
   const link = modal.querySelector('.full-article');
   link.setAttribute('href', post.link);
-
-  modal.addEventListener('hide.bs.modal', () => {
-    modalBackDrop.remove();
-  });
 };
 
 const feedsRender = (feeds) => {
