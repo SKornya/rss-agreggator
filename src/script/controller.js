@@ -34,10 +34,7 @@ export default () => {
         });
         watchedState.posts = [...newPosts, ...state.posts];
       })
-      .catch((err) => {
-        watchedState.form.error = 'networkError';
-        watchedState.proceedState = 'failed';
-      });
+      .catch(() => []);
     setTimeout(updateRSS, 5000, url);
   };
 

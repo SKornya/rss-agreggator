@@ -65,14 +65,6 @@ const containerRender = (name) => {
 const modalRender = (post) => {
   const modal = document.querySelector('.modal');
 
-  modal.addEventListener('shown.bs.modal', () => {});
-
-  modal.classList.add('show');
-  modal.setAttribute('style', 'block');
-  modal.setAttribute('aria-modal', 'true');
-  modal.setAttribute('role', 'dialog');
-  modal.removeAttribute('aria-hidden');
-
   const title = modal.querySelector('.modal-title');
   title.textContent = post.title;
 
@@ -81,8 +73,6 @@ const modalRender = (post) => {
 
   const link = modal.querySelector('.full-article');
   link.setAttribute('href', post.link);
-
-  modal.addEventListener('hidden.bs.modal', () => {});
 };
 
 const feedsRender = (feeds) => {
