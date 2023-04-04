@@ -12,8 +12,7 @@ const getFeed = (document) => {
 const getPosts = (document) => {
   const items = document.querySelectorAll('item');
   const list = Array.from(items);
-  return list.map((item, index) => ({
-    postId: index + 1,
+  return list.map((item) => ({
     title: item.querySelector('title').textContent,
     description: item.querySelector('description').textContent,
     link: item.querySelector('link').textContent,

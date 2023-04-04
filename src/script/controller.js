@@ -25,11 +25,12 @@ export default () => {
     axios.get(getOriginURL(url.trim()))
       .then((response) => {
         const [feed, posts] = parseData(response.data.contents);
-        const postsFromState = state.posts.filter((post) => post.feedId === feed.id);
+        const feedId = state.feeds.find((item) => item.link === feed.link).id;
+        const postsFromState = state.posts.filter((post) => post.feedId === feedId);
         const newPosts = _.differenceBy(posts, postsFromState, 'link');
         newPosts.forEach((post) => {
           post.id = _.uniqueId();
-          post.feedId = feed.id;
+          post.feedId = feedId;
         });
         watchedState.posts = [...newPosts, ...state.posts];
       })
