@@ -63,11 +63,10 @@ const containerRender = (name) => {
 };
 
 const modalRender = (post) => {
-  const body = document.querySelector('body');
-  body.classList.add('modal-open');
-  body.setAttribute('style', 'overflow: hidden; padding-right: 0px;');
-
   const modal = document.querySelector('.modal');
+
+  modal.addEventListener('shown.bs.modal', () => {});
+
   modal.classList.add('show');
   modal.setAttribute('style', 'block');
   modal.setAttribute('aria-modal', 'true');
@@ -82,6 +81,8 @@ const modalRender = (post) => {
 
   const link = modal.querySelector('.full-article');
   link.setAttribute('href', post.link);
+
+  modal.addEventListener('hidden.bs.modal', () => {});
 };
 
 const feedsRender = (feeds) => {
