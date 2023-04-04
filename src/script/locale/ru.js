@@ -10,8 +10,8 @@ export default {
     error: {
       notValidURL: 'Ссылка должна быть валидным URL',
       oneOfFeeds: 'RSS уже существует',
-      networkError: 'Что-то пошло не так',
-      parsererror: 'Ссылка не явлется RSS',
+      networkError: 'Ошибка сети',
+      parsererror: 'Ресурс не содержит валидный RSS',
     },
     loaded: {
       success: 'RSS успешно загружен',
