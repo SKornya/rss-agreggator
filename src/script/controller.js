@@ -35,11 +35,7 @@ export default () => {
         watchedState.posts = [...newPosts, ...state.posts];
       })
       .catch((err) => {
-        if (!(_.has(err, 'errors'))) {
-          watchedState.form.error = 'networkError';
-        } else {
-          watchedState.form.error = 'parsererror';
-        }
+        watchedState.form.error = 'networkError';
         watchedState.proceedState = 'failed';
       });
     setTimeout(updateRSS, 5000, url);

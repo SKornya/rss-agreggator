@@ -70,7 +70,7 @@ const modalRender = (post) => {
   const modal = document.querySelector('.modal');
   modal.classList.add('show');
   modal.setAttribute('style', 'block');
-  modal.setAttribute('aria-model', 'true');
+  modal.setAttribute('aria-modal', 'true');
   modal.setAttribute('role', 'dialog');
   modal.removeAttribute('aria-hidden');
 
