@@ -62,6 +62,36 @@ const containerRender = (name) => {
   container.append(card);
 };
 
+const modalRender = (post) => {
+  const body = document.querySelector('body');
+  body.classList.add('modal-open');
+  body.setAttribute('style', 'overflow: hidden; padding-right: 0px;');
+
+  const modalBackDrop = document.createElement('div');
+  modalBackDrop.classList.add('modal-backdrop', 'fade', 'show');
+  body.append(modalBackDrop);
+
+  const modal = document.querySelector('.modal');
+  modal.classList.add('show');
+  modal.setAttribute('style', 'block');
+  modal.setAttribute('aria-model', 'true');
+  modal.setAttribute('role', 'dialog');
+  modal.removeAttribute('aria-hidden');
+
+  const title = modal.querySelector('.modal-title');
+  title.textContent = post.title;
+
+  const description = modal.querySelector('.modal-body');
+  description.textContent = post.description;
+
+  const link = modal.querySelector('.full-article');
+  link.setAttribute('href', post.link);
+
+  modal.addEventListener('hide.bs.modal', () => {
+    modalBackDrop.remove();
+  });
+};
+
 const feedsRender = (feeds) => {
   containerRender('feeds');
 
@@ -102,6 +132,7 @@ const postsRender = (posts) => {
     a.classList.add('fw-bold');
     if (post.read) {
       a.classList.replace('fw-bold', 'fw-normal');
+      a.classList.add('link-secondary');
     }
     a.setAttribute('href', post.link);
     a.setAttribute('data-id', post.postId);
@@ -120,6 +151,8 @@ const postsRender = (posts) => {
     button.addEventListener('click', () => {
       post.read = true;
       a.classList.replace('fw-bold', 'fw-normal');
+      a.classList.add('link-secondary');
+      modalRender(post);
     });
 
     li.append(a, button);
