@@ -61,7 +61,6 @@ export default () => {
         updateRSS(url);
       })
       .catch((err) => {
-        console.log(err);
         if (!(_.has(err, 'errors'))) {
           watchedState.form.error = 'networkError';
         } else {
