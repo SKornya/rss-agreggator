@@ -8,7 +8,7 @@ i18n.init({
   resources,
 });
 
-export const mainPageRender = () => {
+export const initRender = () => {
   const fields = {
     title: document.querySelector('h1'),
     lead: document.querySelector('.lead'),
@@ -25,12 +25,6 @@ export const mainPageRender = () => {
   input.setAttribute('placeholder', i18n.t('init.placeholder'));
 };
 
-// const errorRender = (errorText) => {
-//   const feedback = document.querySelector('.feedback');
-//   feedback.classList.replace('text-success', 'text-danger');
-//   feedback.textContent = i18n.t(`error.${errorText}`);
-// };
-
 const feedbackRender = (value, type = 'loaded') => {
   const feedback = document.querySelector('.feedback');
   switch (type) {
@@ -46,34 +40,30 @@ const feedbackRender = (value, type = 'loaded') => {
   feedback.textContent = i18n.t(`${type}.${value}`);
 };
 
-const containersRender = () => {
-  const cardRender = (blockName) => {
-    const card = document.createElement('div');
-    card.classList.add('card', 'border-0');
+const containerRender = (name) => {
+  const card = document.createElement('div');
+  card.classList.add('card', 'border-0');
+  card.innerHTML = '';
 
-    const cardBody = document.createElement('div');
-    cardBody.classList.add('card-body');
-    const cardHeader = document.createElement('h2');
-    cardHeader.classList.add('card-title', 'h4');
-    cardHeader.textContent = i18n.t(`${blockName}`);
-    cardBody.append(cardHeader);
+  const cardBody = document.createElement('div');
+  cardBody.classList.add('card-body');
+  const cardHeader = document.createElement('h2');
+  cardHeader.classList.add('card-title', 'h4');
+  cardHeader.textContent = i18n.t(`${name}`);
+  cardBody.append(cardHeader);
 
-    const list = document.createElement('ul');
-    list.classList.add('list-group', 'border-0', 'rounded-0');
+  const list = document.createElement('ul');
+  list.classList.add('list-group', 'border-0', 'rounded-0');
 
-    card.append(cardBody, list);
-    return card;
-  };
+  card.append(cardBody, list);
 
-  const postsPart = document.querySelector('.posts');
-  const feedsPart = document.querySelector('.feeds');
-  postsPart.append(cardRender('posts'));
-  feedsPart.append(cardRender('feeds'));
+  const container = document.querySelector(`.${name}`);
+  container.innerHTML = '';
+  container.append(card);
 };
 
 const feedsRender = (feeds) => {
-  const feedsContainer = document.querySelector('.feeds ul');
-  feedsContainer.innerHTML = '';
+  containerRender('feeds');
 
   const addButton = document.querySelector('button[aria-label="add"]');
   addButton.disabled = true;
@@ -97,8 +87,7 @@ const feedsRender = (feeds) => {
 };
 
 const postsRender = (posts) => {
-  const postsContainer = document.querySelector('.posts ul');
-  postsContainer.innerHTML = '';
+  containerRender('posts');
 
   const addButton = document.querySelector('button[aria-label="add"]');
   addButton.disabled = true;
@@ -111,6 +100,9 @@ const postsRender = (posts) => {
 
     const a = document.createElement('a');
     a.classList.add('fw-bold');
+    if (post.read) {
+      a.classList.replace('fw-bold', 'fw-normal');
+    }
     a.setAttribute('href', post.link);
     a.setAttribute('data-id', post.postId);
     a.setAttribute('target', '_blank');
@@ -120,10 +112,16 @@ const postsRender = (posts) => {
     const button = document.createElement('button');
     button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
     button.setAttribute('type', 'button');
-    button.setAttribute('data-id', post.postId);
+    button.setAttribute('data-id', post.id);
     button.setAttribute('data-bs-toggle', 'modal');
     button.setAttribute('data-bs-target', '#modal');
     button.textContent = i18n.t('watchButton');
+
+    button.addEventListener('click', () => {
+      post.read = true;
+      a.classList.replace('fw-bold', 'fw-normal');
+    });
+
     li.append(a, button);
     postsList.append(li);
   });
@@ -135,9 +133,11 @@ export default (state) => {
   const watchedState = onChange(state, (path, value) => {
     switch (path) {
       case 'proceedState':
+        if (value === 'filling') {
+          initRender();
+        }
         if (value === 'loaded') {
           feedbackRender('success');
-          containersRender();
         }
         if (value === 'failed') {
           feedbackRender(state.form.error, 'error');

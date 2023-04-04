@@ -2,14 +2,14 @@
 import * as yup from 'yup';
 import _, { update } from 'lodash';
 import axios from 'axios';
-import getWatchedState, { mainPageRender } from './view.js';
+import getWatchedState, { initRender } from './view.js';
 import parseData from './parser.js';
 
 const getOriginURL = (url) => `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
 
 export default () => {
   const state = {
-    proceedState: 'filling',
+    proceedState: '',
     form: {
       error: '',
     },
@@ -19,18 +19,19 @@ export default () => {
   };
 
   const watchedState = getWatchedState(state);
-  mainPageRender();
+  watchedState.proceedState = 'filling';
 
   const updateRSS = (url) => {
     axios.get(getOriginURL(url.trim()))
       .then((response) => {
         const [feed, posts] = parseData(response.data.contents);
-        const feedId = state.feeds.find((item) => item.link === feed.link).id;
-        posts.forEach((post) => {
+        const postsFromState = state.posts.filter((post) => post.feedId === feed.id);
+        const newPosts = _.differenceBy(posts, postsFromState, 'link');
+        newPosts.forEach((post) => {
           post.id = _.uniqueId();
-          post.feedId = feedId;
+          post.feedId = feed.id;
         });
-        watchedState.posts = [...posts, ...state.posts];
+        watchedState.posts = [...newPosts, ...state.posts];
       })
       .catch((err) => {
         if (!(_.has(err, 'errors'))) {
@@ -60,6 +61,7 @@ export default () => {
         updateRSS(url);
       })
       .catch((err) => {
+        console.log(err);
         if (!(_.has(err, 'errors'))) {
           watchedState.form.error = 'networkError';
         } else {
