@@ -45,6 +45,7 @@ export default () => {
         watchedState.proceedState = 'loaded';
         watchedState.urls.push(url);
         feed.id = _.uniqueId();
+        feed.link = url;
         const feedId = feed.id;
         watchedState.feeds.push(feed);
         posts.forEach((post) => {

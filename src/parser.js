@@ -1,9 +1,7 @@
 const getFeed = (document) => {
   const title = document.querySelector('channel title').textContent;
   const description = document.querySelector('channel description').textContent;
-  const link = document.querySelector('channel link').textContent;
   return {
-    link,
     title,
     description,
   };
