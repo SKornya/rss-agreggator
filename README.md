@@ -3,7 +3,7 @@
 
 ### Linter status:
 
-[![Linter and tests](https://github.com/SKornya/frontend-project-11/workflows/linter-check/badge.svg)](https://github.com/SKornya/frontend-project-11/actions)
+[![Linter and tests](https://github.com/SKornya/frontend-project-11/workflows/linter-check.yml/badge.svg)](https://github.com/SKornya/frontend-project-11/actions)
 
 ### CodeClimate maintainability badge:
 [![Maintainability](https://api.codeclimate.com/v1/badges/fafd1646a17ad537aa81/maintainability)](https://codeclimate.com/github/SKornya/frontend-project-11/maintainability)
