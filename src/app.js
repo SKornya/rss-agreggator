@@ -83,7 +83,17 @@ export default () => {
       .notOneOf(urls)
       .required();
 
-    validateSchema.validate(url)
+    return validateSchema.validate(url);
+  };
+
+  const form = document.querySelector('form');
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    watchedState.proceedState = 'filling';
+    form.focus();
+    const url = new FormData(form).get('url');
+    validate(url, state.urls)
       .then(() => {
         watchedState.proceedState = 'loading';
         getRequest(url, state, watchedState);
@@ -94,16 +104,6 @@ export default () => {
         watchedState.form.error = key;
         watchedState.proceedState = 'failed';
       });
-  };
-
-  const form = document.querySelector('form');
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    watchedState.proceedState = 'filling';
-    form.focus();
-    const url = new FormData(form).get('url');
-    validate(url, state.urls);
     form.reset();
   });
 };
