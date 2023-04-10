@@ -23,7 +23,7 @@ export default (data) => {
   const parsererror = xmlDocument.querySelector('parsererror');
   if (parsererror) {
     const error = new Error(parsererror.textContent);
-    error.isParsingError = true;
+    error.isParserError = true;
     throw error;
   }
   return [getFeed(xmlDocument), getPosts(xmlDocument)];
