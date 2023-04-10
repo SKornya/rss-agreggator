@@ -42,10 +42,12 @@ const getRequest = (url, state, watchedState) => {
       updateRSS(url, state, watchedState);
     })
     .catch((err) => {
-      if (!(_.has(err, 'errors'))) {
+      if (err.isAxiosError) {
         watchedState.form.error = 'networkError';
+      } else if (err.isParserError) {
+        watchedState.form.error = 'parserError';
       } else {
-        watchedState.form.error = 'parsererror';
+        watchedState.form.error = 'unknowError';
       }
       watchedState.proceedState = 'failed';
     });

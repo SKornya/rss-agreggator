@@ -20,9 +20,10 @@ const getPosts = (document) => {
 export default (data) => {
   const parser = new DOMParser();
   const xmlDocument = parser.parseFromString(data, 'application/xml');
-  if (xmlDocument.querySelector('parsererror')) {
-    const error = new Error();
-    error.errors = ['errors.parsingErrors.parsingFailed'];
+  const parsererror = xmlDocument.querySelector('parsererror');
+  if (parsererror) {
+    const error = new Error(parsererror.textContent);
+    error.isParsingError = true;
     throw error;
   }
   return [getFeed(xmlDocument), getPosts(xmlDocument)];
