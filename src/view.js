@@ -25,6 +25,20 @@ export const initRender = () => {
   input.setAttribute('placeholder', i18n.t('init.placeholder'));
 };
 
+const submitBtnSwitching = (operation) => {
+  const btn = document.querySelector('.rss-form .btn');
+  switch (operation) {
+    case 'on':
+      btn.disabled = false;
+      break;
+    case 'off':
+      btn.disabled = true;
+      break;
+    default:
+      break;
+  }
+};
+
 const feedbackRender = (value, type = 'loaded') => {
   const feedback = document.querySelector('.feedback');
   switch (type) {
@@ -78,8 +92,6 @@ const modalRender = (post) => {
 const feedsRender = (feeds) => {
   containerRender('feeds');
 
-  const addButton = document.querySelector('button[aria-label="add"]');
-  addButton.disabled = true;
   const feedsList = document.querySelector('.feeds .card ul');
 
   feeds.forEach((feed) => {
@@ -95,15 +107,10 @@ const feedsRender = (feeds) => {
     li.append(feedHeader, feedDescription);
     feedsList.prepend(li);
   });
-
-  addButton.disabled = false;
 };
 
 const postsRender = (posts) => {
   containerRender('posts');
-
-  const addButton = document.querySelector('button[aria-label="add"]');
-  addButton.disabled = true;
 
   const postsList = document.querySelector('.posts .card ul');
 
@@ -141,8 +148,7 @@ const postsRender = (posts) => {
     li.append(a, button);
     postsList.append(li);
   });
-
-  addButton.disabled = false;
+  submitBtnSwitching('on');
 };
 
 export default (state) => {
@@ -151,6 +157,9 @@ export default (state) => {
       case 'proceedState':
         if (value === 'filling') {
           initRender();
+        }
+        if (value === 'loading') {
+          submitBtnSwitching('off');
         }
         if (value === 'loaded') {
           feedbackRender('success');
