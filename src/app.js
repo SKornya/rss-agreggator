@@ -5,27 +5,37 @@ import axios from 'axios';
 import getWatchedState from './view.js';
 import parseData from './parser.js';
 
+// const getOriginURL = (url) => {
+//   const base = new URL('https://allorigins.hexlet.app/get?disableCache=true');
+//   const params = new URLSearchParams(base.search);
+//   console.log(encodeURIComponent(url));
+//   params.append('url', encodeURIComponent(url));
+//   console.log(params.toString());
+//   base.search = params;
+//   console.log(base);
+//   return base;
+// };
 const getOriginURL = (url) => `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
 
-const updateRSS = (url, state, watchedState) => {
-  axios.get(getOriginURL(url.trim()))
+const updateRSS = (url, watchedState) => {
+  axios.get(getOriginURL(url))
     .then((response) => {
       const [feed, posts] = parseData(response.data.contents);
-      const feedId = state.feeds.find((item) => item.link === feed.link).id;
-      const postsFromState = state.posts.filter((post) => post.feedId === feedId);
+      const feedId = watchedState.feeds.find((item) => item.link === feed.link).id;
+      const postsFromState = watchedState.posts.filter((post) => post.feedId === feedId);
       const newPosts = _.differenceBy(posts, postsFromState, 'link');
       newPosts.forEach((post) => {
         post.id = _.uniqueId();
         post.feedId = feedId;
       });
-      watchedState.posts = [...newPosts, ...state.posts];
+      watchedState.posts = [...newPosts, ...watchedState.posts];
     })
     .catch(() => []);
   setTimeout(updateRSS, 5000, url);
 };
 
-const getRequest = (url, state, watchedState) => {
-  axios.get(getOriginURL(url.trim()))
+const getRequest = (url, watchedState) => {
+  axios.get(getOriginURL(url))
     .then((response) => {
       const [feed, posts] = parseData(response.data.contents);
       watchedState.proceedState = 'loaded';
@@ -38,8 +48,8 @@ const getRequest = (url, state, watchedState) => {
         post.id = _.uniqueId();
         post.feedId = feedId;
       });
-      watchedState.posts = [...posts, ...state.posts];
-      updateRSS(url, state, watchedState);
+      watchedState.posts = [...posts, ...watchedState.posts];
+      updateRSS(url, watchedState);
     })
     .catch((err) => {
       if (err.isAxiosError) {
@@ -96,7 +106,7 @@ export default () => {
     validate(url, state.urls)
       .then(() => {
         watchedState.proceedState = 'loading';
-        getRequest(url, state, watchedState);
+        getRequest(url, watchedState);
       })
       .catch((err) => {
         const [error] = err.errors;
