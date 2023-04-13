@@ -2,36 +2,38 @@
 import * as yup from 'yup';
 import _ from 'lodash';
 import axios from 'axios';
+import * as i18next from 'i18next';
+import resources from './locales/resources.js';
 import getWatchedState from './view.js';
 import parseData from './parser.js';
 
-// const getOriginURL = (url) => {
-//   const base = new URL('https://allorigins.hexlet.app/get?disableCache=true');
-//   const params = new URLSearchParams(base.search);
-//   console.log(encodeURIComponent(url));
-//   params.append('url', encodeURIComponent(url));
-//   console.log(params.toString());
-//   base.search = params;
-//   console.log(base);
-//   return base;
-// };
-const getOriginURL = (url) => `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
+const getOriginURL = (url) => {
+  const base = new URL('https://allorigins.hexlet.app/get?disableCache=true');
+  const params = new URLSearchParams(base.search);
+  params.append('url', url);
+  base.search = params;
+  return base;
+};
 
-const updateRSS = (url, watchedState) => {
-  axios.get(getOriginURL(url))
-    .then((response) => {
-      const [feed, posts] = parseData(response.data.contents);
-      const feedId = watchedState.feeds.find((item) => item.link === feed.link).id;
-      const postsFromState = watchedState.posts.filter((post) => post.feedId === feedId);
-      const newPosts = _.differenceBy(posts, postsFromState, 'link');
-      newPosts.forEach((post) => {
-        post.id = _.uniqueId();
-        post.feedId = feedId;
-      });
-      watchedState.posts = [...newPosts, ...watchedState.posts];
-    })
-    .catch(() => []);
-  setTimeout(updateRSS, 5000, url);
+const updateRSS = (watchedState) => {
+  if (watchedState.urls.length) {
+    watchedState.urls.forEach((url) => {
+      axios.get(getOriginURL(url))
+        .then((response) => {
+          const [feed, posts] = parseData(response.data.contents);
+          const feedId = watchedState.feeds.find((item) => item.link === feed.link).id;
+          const postsFromState = watchedState.posts.filter((post) => post.feedId === feedId);
+          const newPosts = _.differenceBy(posts, postsFromState, 'link');
+          newPosts.forEach((post) => {
+            post.id = _.uniqueId();
+            post.feedId = feedId;
+          });
+          watchedState.posts = [...newPosts, ...watchedState.posts];
+        })
+        .catch(() => []);
+    });
+  }
+  setTimeout(updateRSS, 5000, watchedState);
 };
 
 const getRequest = (url, watchedState) => {
@@ -49,7 +51,6 @@ const getRequest = (url, watchedState) => {
         post.feedId = feedId;
       });
       watchedState.posts = [...posts, ...watchedState.posts];
-      updateRSS(url, watchedState);
     })
     .catch((err) => {
       if (err.isAxiosError) {
@@ -64,18 +65,24 @@ const getRequest = (url, watchedState) => {
 };
 
 export default () => {
-  const state = {
-    proceedState: '',
+  const i18n = i18next.createInstance();
+  i18n.init({
+    lng: 'ru',
+    resources,
+  });
+
+  const initialState = {
+    proceedState: 'filling',
     form: {
       error: '',
     },
     urls: [],
     feeds: [],
     posts: [],
+    readingPost: null,
   };
 
-  const watchedState = getWatchedState(state);
-  watchedState.proceedState = 'filling';
+  const watchedState = getWatchedState(initialState, i18n);
 
   yup.setLocale({
     string: {
@@ -97,13 +104,13 @@ export default () => {
   };
 
   const form = document.querySelector('form');
+  const posts = document.querySelector('.posts');
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    watchedState.proceedState = 'filling';
     form.focus();
     const url = new FormData(form).get('url');
-    validate(url, state.urls)
+    validate(url, initialState.urls)
       .then(() => {
         watchedState.proceedState = 'loading';
         getRequest(url, watchedState);
@@ -116,4 +123,13 @@ export default () => {
       });
     form.reset();
   });
+
+  posts.addEventListener('click', (e) => {
+    const { target } = e;
+    if (target.tagName === 'BUTTON') {
+      watchedState.readingPost = watchedState.posts.find((post) => post.id === target.dataset.id);
+    }
+  });
+
+  updateRSS(watchedState);
 };

@@ -1,29 +1,4 @@
 import onChange from 'on-change';
-import * as i18next from 'i18next';
-import resources from './locales/resources.js';
-
-const i18n = i18next.createInstance();
-i18n.init({
-  lng: 'ru',
-  resources,
-});
-
-export const initRender = () => {
-  const fields = {
-    title: document.querySelector('h1'),
-    lead: document.querySelector('.lead'),
-    addButton: document.querySelector('[aria-label="add"]'),
-    inputLabel: document.querySelector('label[for="url-input"]'),
-    example: document.querySelector('.text-muted'),
-  };
-
-  Object.entries(fields).forEach(([key, value]) => {
-    const element = value;
-    element.textContent = i18n.t(`init.${key}`);
-  });
-  const input = document.querySelector('#url-input');
-  input.setAttribute('placeholder', i18n.t('init.placeholder'));
-};
 
 const submitBtnSwitching = (operation) => {
   const btn = document.querySelector('.rss-form .btn');
@@ -39,7 +14,7 @@ const submitBtnSwitching = (operation) => {
   }
 };
 
-const feedbackRender = (value, type = 'loaded') => {
+const feedbackRender = (value, type, i18n) => {
   const feedback = document.querySelector('.feedback');
   switch (type) {
     case 'error':
@@ -54,7 +29,7 @@ const feedbackRender = (value, type = 'loaded') => {
   feedback.textContent = i18n.t(`${type}.${value}`);
 };
 
-const containerRender = (name) => {
+const containerRender = (name, i18n) => {
   const card = document.createElement('div');
   card.classList.add('card', 'border-0');
   card.innerHTML = '';
@@ -77,6 +52,11 @@ const containerRender = (name) => {
 };
 
 const modalRender = (post) => {
+  const a = document.querySelector(`[data-id="${post.id}"]`);
+  post.read = true;
+  a.classList.replace('fw-bold', 'fw-normal');
+  a.classList.add('link-secondary');
+
   const modal = document.querySelector('.modal');
 
   const title = modal.querySelector('.modal-title');
@@ -89,8 +69,8 @@ const modalRender = (post) => {
   link.setAttribute('href', post.link);
 };
 
-const feedsRender = (feeds) => {
-  containerRender('feeds');
+const feedsRender = (feeds, i18n) => {
+  containerRender('feeds', i18n);
 
   const feedsList = document.querySelector('.feeds .card ul');
 
@@ -109,8 +89,8 @@ const feedsRender = (feeds) => {
   });
 };
 
-const postsRender = (posts) => {
-  containerRender('posts');
+const postsRender = (posts, i18n) => {
+  containerRender('posts', i18n);
 
   const postsList = document.querySelector('.posts .card ul');
 
@@ -125,7 +105,7 @@ const postsRender = (posts) => {
       a.classList.add('link-secondary');
     }
     a.setAttribute('href', post.link);
-    a.setAttribute('data-id', post.postId);
+    a.setAttribute('data-id', post.id);
     a.setAttribute('target', '_blank');
     a.setAttribute('rel', 'noopener norefferer');
     a.textContent = post.title;
@@ -138,12 +118,12 @@ const postsRender = (posts) => {
     button.setAttribute('data-bs-target', '#modal');
     button.textContent = i18n.t('watchButton');
 
-    button.addEventListener('click', () => {
-      post.read = true;
-      a.classList.replace('fw-bold', 'fw-normal');
-      a.classList.add('link-secondary');
-      modalRender(post);
-    });
+    // button.addEventListener('click', () => {
+    //   post.read = true;
+    //   a.classList.replace('fw-bold', 'fw-normal');
+    //   a.classList.add('link-secondary');
+    //   modalRender(post);
+    // });
 
     li.append(a, button);
     postsList.append(li);
@@ -151,28 +131,28 @@ const postsRender = (posts) => {
   submitBtnSwitching('on');
 };
 
-export default (state) => {
+export default (state, i18n) => {
   const watchedState = onChange(state, (path, value) => {
     switch (path) {
       case 'proceedState':
-        if (value === 'filling') {
-          initRender();
-        }
         if (value === 'loading') {
           submitBtnSwitching('off');
         }
         if (value === 'loaded') {
-          feedbackRender('success');
+          feedbackRender('success', 'loaded', i18n);
         }
         if (value === 'failed') {
-          feedbackRender(state.form.error, 'error');
+          feedbackRender(state.form.error, 'error', i18n);
         }
         break;
       case 'feeds':
-        feedsRender(state.feeds);
+        feedsRender(value, i18n);
         break;
       case 'posts':
-        postsRender(state.posts);
+        postsRender(value, i18n);
+        break;
+      case 'readingPost':
+        modalRender(value);
         break;
       default:
         break;
