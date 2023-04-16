@@ -32,12 +32,11 @@ const updateRSS = (watchedState) => {
       })
       .catch(() => []));
     const promise = Promise.all(promises);
-    promise
-      .then((data) => {
-        data.forEach((posts) => {
-          watchedState.posts = [...posts, ...watchedState.posts];
-        });
+    promise.then((data) => {
+      data.forEach((posts) => {
+        watchedState.posts = [...posts, ...watchedState.posts];
       });
+    });
   }
   setTimeout(updateRSS, 5000, watchedState);
 };
