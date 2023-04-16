@@ -7,41 +7,46 @@ import resources from './locales/resources.js';
 import getWatchedState from './view.js';
 import parseData from './parser.js';
 
-const getOriginURL = (url) => {
-  const base = new URL('https://allorigins.hexlet.app/get?disableCache=true');
-  const params = new URLSearchParams(base.search);
-  params.append('url', url);
-  base.search = params;
-  return base;
+const addProxy = (url) => {
+  const urlWithProxy = new URL('/get', 'https://allorigins.hexlet.app');
+  urlWithProxy.searchParams.set('url', url);
+  urlWithProxy.searchParams.set('disableCache', 'true');
+  return urlWithProxy.toString();
 };
 
 const updateRSS = (watchedState) => {
-  if (watchedState.urls.length) {
-    watchedState.urls.forEach((url) => {
-      axios.get(getOriginURL(url))
-        .then((response) => {
-          const [feed, posts] = parseData(response.data.contents);
-          const feedId = watchedState.feeds.find((item) => item.link === feed.link).id;
-          const postsFromState = watchedState.posts.filter((post) => post.feedId === feedId);
-          const newPosts = _.differenceBy(posts, postsFromState, 'link');
-          newPosts.forEach((post) => {
-            post.id = _.uniqueId();
-            post.feedId = feedId;
-          });
-          watchedState.posts = [...newPosts, ...watchedState.posts];
-        })
-        .catch(() => []);
-    });
+  if (watchedState.feeds.length) {
+    const promises = watchedState.feeds.map(({ link }) => axios.get(addProxy(link))
+      .then((response) => {
+        const [feed, posts] = parseData(response.data.contents);
+        feed.link = link;
+        const feedId = watchedState.feeds.find((item) => item.link === feed.link).id;
+        feed.id = feedId;
+        const postsFromState = watchedState.posts.filter((post) => post.feedId === feedId);
+        const newPosts = _.differenceBy(posts, postsFromState, 'link');
+        newPosts.forEach((post) => {
+          post.id = _.uniqueId();
+          post.feedId = feedId;
+        });
+        return newPosts;
+      })
+      .catch(() => []));
+    const promise = Promise.all(promises);
+    promise
+      .then((data) => {
+        data.forEach((posts) => {
+          watchedState.posts = [...posts, ...watchedState.posts];
+        });
+      });
   }
   setTimeout(updateRSS, 5000, watchedState);
 };
 
 const getRequest = (url, watchedState) => {
-  axios.get(getOriginURL(url))
+  axios.get(addProxy(url))
     .then((response) => {
       const [feed, posts] = parseData(response.data.contents);
-      watchedState.proceedState = 'loaded';
-      watchedState.urls.push(url);
+      watchedState.status = 'loaded';
       feed.id = _.uniqueId();
       feed.link = url;
       const feedId = feed.id;
@@ -60,7 +65,7 @@ const getRequest = (url, watchedState) => {
       } else {
         watchedState.form.error = 'unknowError';
       }
-      watchedState.proceedState = 'failed';
+      watchedState.status = 'failed';
     });
 };
 
@@ -72,14 +77,13 @@ export default () => {
   });
 
   const initialState = {
-    proceedState: 'filling',
+    status: 'filling',
     form: {
       error: '',
     },
-    urls: [],
     feeds: [],
     posts: [],
-    readingPost: null,
+    readPostsIds: new Set(),
   };
 
   const watchedState = getWatchedState(initialState, i18n);
@@ -108,26 +112,27 @@ export default () => {
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    form.focus();
     const url = new FormData(form).get('url');
-    validate(url, initialState.urls)
+    const feedsURLs = watchedState.feeds.map(({ link }) => link);
+    watchedState.status = 'loading';
+    validate(url, feedsURLs)
       .then(() => {
-        watchedState.proceedState = 'loading';
         getRequest(url, watchedState);
       })
       .catch((err) => {
         const [error] = err.errors;
         const { key } = error;
         watchedState.form.error = key;
-        watchedState.proceedState = 'failed';
+        watchedState.status = 'failed';
       });
     form.reset();
   });
 
   posts.addEventListener('click', (e) => {
     const { target } = e;
-    if (target.tagName === 'BUTTON') {
-      watchedState.readingPost = watchedState.posts.find((post) => post.id === target.dataset.id);
+    const { dataset: { id } } = target;
+    if (id) {
+      watchedState.readPostsIds.add(id);
     }
   });
 

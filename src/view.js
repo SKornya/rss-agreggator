@@ -51,12 +51,17 @@ const containerRender = (name, i18n) => {
   container.append(card);
 };
 
-const modalRender = (post) => {
-  const a = document.querySelector(`[data-id="${post.id}"]`);
-  post.read = true;
-  a.classList.replace('fw-bold', 'fw-normal');
-  a.classList.add('link-secondary');
+const modalRender = (posts, readPostsIds) => {
+  posts.forEach((post) => {
+    if (readPostsIds.has(post.id)) {
+      post.read = true;
+      const a = document.querySelector(`[data-id="${post.id}"]`);
+      a.classList.replace('fw-bold', 'fw-normal');
+      a.classList.add('link-secondary');
+    }
+  });
 
+  const post = posts.find(({ id }) => id === [...readPostsIds].at(-1));
   const modal = document.querySelector('.modal');
 
   const title = modal.querySelector('.modal-title');
@@ -118,13 +123,6 @@ const postsRender = (posts, i18n) => {
     button.setAttribute('data-bs-target', '#modal');
     button.textContent = i18n.t('watchButton');
 
-    // button.addEventListener('click', () => {
-    //   post.read = true;
-    //   a.classList.replace('fw-bold', 'fw-normal');
-    //   a.classList.add('link-secondary');
-    //   modalRender(post);
-    // });
-
     li.append(a, button);
     postsList.append(li);
   });
@@ -134,7 +132,7 @@ const postsRender = (posts, i18n) => {
 export default (state, i18n) => {
   const watchedState = onChange(state, (path, value) => {
     switch (path) {
-      case 'proceedState':
+      case 'status':
         if (value === 'loading') {
           submitBtnSwitching('off');
         }
@@ -151,8 +149,8 @@ export default (state, i18n) => {
       case 'posts':
         postsRender(value, i18n);
         break;
-      case 'readingPost':
-        modalRender(value);
+      case 'readPostsIds':
+        modalRender(state.posts, value);
         break;
       default:
         break;
