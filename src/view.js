@@ -1,35 +1,21 @@
 import onChange from 'on-change';
-
-const submitBtnSwitching = (operation) => {
-  const btn = document.querySelector('.rss-form .btn');
-  switch (operation) {
-    case 'on':
-      btn.disabled = false;
-      break;
-    case 'off':
-      btn.disabled = true;
-      break;
-    default:
-      break;
-  }
-};
+import { elements, setAttributes } from './utils.js';
 
 const feedbackRender = (value, type, i18n) => {
-  const feedback = document.querySelector('.feedback');
   switch (type) {
     case 'error':
-      feedback.classList.replace('text-success', 'text-danger');
+      elements.feedback.classList.replace('text-success', 'text-danger');
       break;
     case 'loaded':
-      feedback.classList.replace('text-danger', 'text-success');
+      elements.feedback.classList.replace('text-danger', 'text-success');
       break;
     default:
       break;
   }
-  feedback.textContent = i18n.t(`${type}.${value}`);
+  elements.feedback.textContent = i18n.t(`${type}.${value}`);
 };
 
-const containerRender = (name, i18n) => {
+const containerRender = (containerName, i18n) => {
   const card = document.createElement('div');
   card.classList.add('card', 'border-0');
   card.innerHTML = '';
@@ -38,7 +24,7 @@ const containerRender = (name, i18n) => {
   cardBody.classList.add('card-body');
   const cardHeader = document.createElement('h2');
   cardHeader.classList.add('card-title', 'h4');
-  cardHeader.textContent = i18n.t(`${name}`);
+  cardHeader.textContent = i18n.t(`${containerName}`);
   cardBody.append(cardHeader);
 
   const list = document.createElement('ul');
@@ -46,38 +32,27 @@ const containerRender = (name, i18n) => {
 
   card.append(cardBody, list);
 
-  const container = document.querySelector(`.${name}`);
+  const container = document.querySelector(`.${containerName}`);
   container.innerHTML = '';
   container.append(card);
 };
 
-const modalRender = (posts, readPostsIds) => {
-  posts.forEach((post) => {
-    if (readPostsIds.has(post.id)) {
-      post.read = true;
-      const a = document.querySelector(`[data-id="${post.id}"]`);
-      a.classList.replace('fw-bold', 'fw-normal');
-      a.classList.add('link-secondary');
-    }
-  });
+const modalRender = (id, posts) => {
+  const a = document.querySelector(`[data-id="${id}"]`);
+  a.classList.replace('fw-bold', 'fw-normal');
+  a.classList.add('link-secondary');
 
-  const post = posts.find(({ id }) => id === [...readPostsIds].at(-1));
-  const modal = document.querySelector('.modal');
+  const selectedPost = posts.find((post) => post.id === id);
 
-  const title = modal.querySelector('.modal-title');
-  title.textContent = post.title;
-
-  const description = modal.querySelector('.modal-body');
-  description.textContent = post.description;
-
-  const link = modal.querySelector('.full-article');
-  link.setAttribute('href', post.link);
+  elements.modalTitle.textContent = selectedPost.title;
+  elements.modalDescription.textContent = selectedPost.description;
+  elements.modalFullArticle.setAttribute('href', selectedPost.link);
 };
 
 const feedsRender = (feeds, i18n) => {
   containerRender('feeds', i18n);
 
-  const feedsList = document.querySelector('.feeds .card ul');
+  const feedsList = elements.feeds.querySelector('.card ul');
 
   feeds.forEach((feed) => {
     const li = document.createElement('li');
@@ -94,39 +69,36 @@ const feedsRender = (feeds, i18n) => {
   });
 };
 
-const postsRender = (posts, i18n) => {
+const postsRender = (posts, readPostsIds, i18n) => {
   containerRender('posts', i18n);
 
-  const postsList = document.querySelector('.posts .card ul');
+  const postsList = elements.posts.querySelector('.card ul');
 
   posts.forEach((post) => {
     const li = document.createElement('li');
     li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
 
     const a = document.createElement('a');
+
     a.classList.add('fw-bold');
-    if (post.read) {
+    if (readPostsIds.has(post.id)) {
       a.classList.replace('fw-bold', 'fw-normal');
       a.classList.add('link-secondary');
     }
-    a.setAttribute('href', post.link);
-    a.setAttribute('data-id', post.id);
-    a.setAttribute('target', '_blank');
-    a.setAttribute('rel', 'noopener norefferer');
+
+    const aAttributes = [['href', post.link], ['data-id', post.id], ['target', '_blank'], ['rel', 'noopener norefferer']];
+    setAttributes(a, aAttributes);
     a.textContent = post.title;
 
     const button = document.createElement('button');
+    const buttonAttributes = [['type', 'button'], ['data-id', post.id], ['data-bs-toggle', 'modal'], ['data-bs-target', '#modal']];
+    setAttributes(button, buttonAttributes);
     button.classList.add('btn', 'btn-outline-primary', 'btn-sm');
-    button.setAttribute('type', 'button');
-    button.setAttribute('data-id', post.id);
-    button.setAttribute('data-bs-toggle', 'modal');
-    button.setAttribute('data-bs-target', '#modal');
     button.textContent = i18n.t('watchButton');
 
     li.append(a, button);
     postsList.append(li);
   });
-  submitBtnSwitching('on');
 };
 
 export default (state, i18n) => {
@@ -134,10 +106,11 @@ export default (state, i18n) => {
     switch (path) {
       case 'status':
         if (value === 'loading') {
-          submitBtnSwitching('off');
+          elements.submit.disabled = true;
         }
         if (value === 'loaded') {
           feedbackRender('success', 'loaded', i18n);
+          elements.submit.disabled = false;
         }
         if (value === 'failed') {
           feedbackRender(state.form.error, 'error', i18n);
@@ -147,10 +120,10 @@ export default (state, i18n) => {
         feedsRender(value, i18n);
         break;
       case 'posts':
-        postsRender(value, i18n);
+        postsRender(value, state.readPostsIds, i18n);
         break;
-      case 'readPostsIds':
-        modalRender(state.posts, value);
+      case 'selectedPostId':
+        modalRender(value, state.posts);
         break;
       default:
         break;

@@ -6,37 +6,23 @@ import * as i18next from 'i18next';
 import resources from './locales/resources.js';
 import getWatchedState from './view.js';
 import parseData from './parser.js';
-
-const addProxy = (url) => {
-  const urlWithProxy = new URL('/get', 'https://allorigins.hexlet.app');
-  urlWithProxy.searchParams.set('url', url);
-  urlWithProxy.searchParams.set('disableCache', 'true');
-  return urlWithProxy.toString();
-};
+import { elements, addProxy } from './utils.js';
 
 const updateRSS = (watchedState) => {
   if (watchedState.feeds.length) {
-    const promises = watchedState.feeds.map(({ link }) => axios.get(addProxy(link))
+    const promises = watchedState.feeds.map((feed) => axios.get(addProxy(feed.link))
       .then((response) => {
-        const [feed, posts] = parseData(response.data.contents);
-        feed.link = link;
-        const feedId = watchedState.feeds.find((item) => item.link === feed.link).id;
-        feed.id = feedId;
-        const postsFromState = watchedState.posts.filter((post) => post.feedId === feedId);
+        const [, posts] = parseData(response.data.contents);
+        const postsFromState = watchedState.posts.filter((post) => post.feedId === feed.id);
         const newPosts = _.differenceBy(posts, postsFromState, 'link');
         newPosts.forEach((post) => {
           post.id = _.uniqueId();
-          post.feedId = feedId;
+          post.feedId = feed.id;
         });
-        return newPosts;
+        watchedState.posts = [...newPosts, ...watchedState.posts];
       })
       .catch(() => []));
     const promise = Promise.all(promises);
-    promise.then((data) => {
-      data.forEach((posts) => {
-        watchedState.posts = [...posts, ...watchedState.posts];
-      });
-    });
   }
   setTimeout(updateRSS, 5000, watchedState);
 };
@@ -45,7 +31,6 @@ const getRequest = (url, watchedState) => {
   axios.get(addProxy(url))
     .then((response) => {
       const [feed, posts] = parseData(response.data.contents);
-      watchedState.status = 'loaded';
       feed.id = _.uniqueId();
       feed.link = url;
       const feedId = feed.id;
@@ -55,6 +40,7 @@ const getRequest = (url, watchedState) => {
         post.feedId = feedId;
       });
       watchedState.posts = [...posts, ...watchedState.posts];
+      watchedState.status = 'loaded';
     })
     .catch((err) => {
       if (err.isAxiosError) {
@@ -78,10 +64,11 @@ export default () => {
   const initialState = {
     status: 'filling',
     form: {
-      error: '',
+      error: null,
     },
     feeds: [],
     posts: [],
+    selectedPostId: null,
     readPostsIds: new Set(),
   };
 
@@ -106,12 +93,9 @@ export default () => {
     return validateSchema.validate(url);
   };
 
-  const form = document.querySelector('form');
-  const posts = document.querySelector('.posts');
-
-  form.addEventListener('submit', (e) => {
+  elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const url = new FormData(form).get('url');
+    const url = new FormData(elements.form).get('url');
     const feedsURLs = watchedState.feeds.map(({ link }) => link);
     watchedState.status = 'loading';
     validate(url, feedsURLs)
@@ -124,14 +108,15 @@ export default () => {
         watchedState.form.error = key;
         watchedState.status = 'failed';
       });
-    form.reset();
+    elements.form.reset();
   });
 
-  posts.addEventListener('click', (e) => {
+  elements.posts.addEventListener('click', (e) => {
     const { target } = e;
     const { dataset: { id } } = target;
     if (id) {
       watchedState.readPostsIds.add(id);
+      watchedState.selectedPostId = id;
     }
   });
 
