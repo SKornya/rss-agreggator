@@ -9,22 +9,25 @@ import parseData from './parser.js';
 import { elements, addProxy } from './utils.js';
 
 const updateRSS = (watchedState) => {
-  if (watchedState.feeds.length) {
-    const promises = watchedState.feeds.map((feed) => axios.get(addProxy(feed.link))
-      .then((response) => {
-        const [, posts] = parseData(response.data.contents);
-        const postsFromState = watchedState.posts.filter((post) => post.feedId === feed.id);
-        const newPosts = _.differenceBy(posts, postsFromState, 'link');
-        newPosts.forEach((post) => {
-          post.id = _.uniqueId();
-          post.feedId = feed.id;
-        });
+  const promises = watchedState.feeds.map((feed) => axios.get(addProxy(feed.link))
+    .then((response) => {
+      const [, posts] = parseData(response.data.contents);
+      const postsFromState = watchedState.posts.filter((post) => post.feedId === feed.id);
+      const newPosts = _.differenceBy(posts, postsFromState, 'link');
+      newPosts.forEach((post) => {
+        post.id = _.uniqueId();
+        post.feedId = feed.id;
+      });
+      return newPosts;
+    })
+    .catch(() => []));
+  const promise = Promise.all(promises)
+    .then((postsCollection) => {
+      postsCollection.forEach((newPosts) => {
         watchedState.posts = [...newPosts, ...watchedState.posts];
-      })
-      .catch(() => []));
-    const promise = Promise.all(promises);
-  }
-  setTimeout(updateRSS, 5000, watchedState);
+      });
+      setTimeout(updateRSS, 5000, watchedState);
+    });
 };
 
 const getRequest = (url, watchedState) => {
