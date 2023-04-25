@@ -1,7 +1,13 @@
 import onChange from 'on-change';
-import { elements, setAttributes } from './utils.js';
 
-const feedbackRender = (value, type, i18n) => {
+const setAttributes = (element, attributes) => {
+  attributes.forEach((attr) => {
+    const [name, value] = attr;
+    element.setAttribute(name, value);
+  });
+};
+
+const feedbackRender = (value, type, i18n, elements) => {
   switch (type) {
     case 'error':
       elements.feedback.classList.replace('text-success', 'text-danger');
@@ -37,7 +43,7 @@ const containerRender = (containerName, i18n) => {
   container.append(card);
 };
 
-const modalRender = (id, posts) => {
+const modalRender = (id, posts, elements) => {
   const a = document.querySelector(`[data-id="${id}"]`);
   a.classList.replace('fw-bold', 'fw-normal');
   a.classList.add('link-secondary');
@@ -49,7 +55,7 @@ const modalRender = (id, posts) => {
   elements.modalFullArticle.setAttribute('href', selectedPost.link);
 };
 
-const feedsRender = (feeds, i18n) => {
+const feedsRender = (feeds, i18n, elements) => {
   containerRender('feeds', i18n);
 
   const feedsList = elements.feeds.querySelector('.card ul');
@@ -69,7 +75,7 @@ const feedsRender = (feeds, i18n) => {
   });
 };
 
-const postsRender = (posts, readPostsIds, i18n) => {
+const postsRender = (posts, readPostsIds, i18n, elements) => {
   containerRender('posts', i18n);
 
   const postsList = elements.posts.querySelector('.card ul');
@@ -101,7 +107,7 @@ const postsRender = (posts, readPostsIds, i18n) => {
   });
 };
 
-export default (state, i18n) => {
+export default (state, i18n, elements) => {
   const watchedState = onChange(state, (path, value) => {
     switch (path) {
       case 'status':
@@ -109,21 +115,21 @@ export default (state, i18n) => {
           elements.submit.disabled = true;
         }
         if (value === 'loaded') {
-          feedbackRender('success', 'loaded', i18n);
+          feedbackRender('success', 'loaded', i18n, elements);
           elements.submit.disabled = false;
         }
         if (value === 'failed') {
-          feedbackRender(state.form.error, 'error', i18n);
+          feedbackRender(state.form.error, 'error', i18n, elements);
         }
         break;
       case 'feeds':
-        feedsRender(value, i18n);
+        feedsRender(value, i18n, elements);
         break;
       case 'posts':
-        postsRender(value, state.readPostsIds, i18n);
+        postsRender(value, state.readPostsIds, i18n, elements);
         break;
       case 'selectedPostId':
-        modalRender(value, state.posts);
+        modalRender(value, state.posts, elements);
         break;
       default:
         break;

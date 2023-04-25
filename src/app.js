@@ -6,7 +6,13 @@ import * as i18next from 'i18next';
 import resources from './locales/resources.js';
 import getWatchedState from './view.js';
 import parseData from './parser.js';
-import { elements, addProxy } from './utils.js';
+
+const addProxy = (url) => {
+  const urlWithProxy = new URL('/get', 'https://allorigins.hexlet.app');
+  urlWithProxy.searchParams.set('url', url);
+  urlWithProxy.searchParams.set('disableCache', 'true');
+  return urlWithProxy.toString();
+};
 
 const updateRSS = (watchedState) => {
   const promises = watchedState.feeds.map((feed) => axios.get(addProxy(feed.link))
@@ -18,14 +24,11 @@ const updateRSS = (watchedState) => {
         post.id = _.uniqueId();
         post.feedId = feed.id;
       });
-      return newPosts;
+      watchedState.posts = [...newPosts, ...watchedState.posts];
     })
     .catch(() => []));
   const promise = Promise.all(promises)
-    .then((postsCollection) => {
-      postsCollection.forEach((newPosts) => {
-        watchedState.posts = [...newPosts, ...watchedState.posts];
-      });
+    .then(() => {
       setTimeout(updateRSS, 5000, watchedState);
     });
 };
@@ -62,66 +65,78 @@ export default () => {
   i18n.init({
     lng: 'ru',
     resources,
-  });
+  })
+    .then(() => {
+      const initialState = {
+        status: 'filling',
+        form: {
+          error: null,
+        },
+        feeds: [],
+        posts: [],
+        selectedPostId: null,
+        readPostsIds: new Set(),
+      };
 
-  const initialState = {
-    status: 'filling',
-    form: {
-      error: null,
-    },
-    feeds: [],
-    posts: [],
-    selectedPostId: null,
-    readPostsIds: new Set(),
-  };
+      const elements = {
+        form: document.querySelector('form'),
+        posts: document.querySelector('.posts'),
+        feeds: document.querySelector('.feeds'),
+        submit: document.querySelector('.rss-form .btn'),
+        feedback: document.querySelector('.feedback'),
+        modal: document.querySelector('.modal'),
+        modalTitle: document.querySelector('.modal-title'),
+        modalDescription: document.querySelector('.modal-body'),
+        modalFullArticle: document.querySelector('.full-article'),
+      };
 
-  const watchedState = getWatchedState(initialState, i18n);
+      const watchedState = getWatchedState(initialState, i18n, elements);
 
-  yup.setLocale({
-    string: {
-      url: ({ url }) => ({ key: 'notValidURL', values: { url } }),
-    },
-    mixed: {
-      notOneOf: ({ notOneOf }) => ({ key: 'oneOfFeeds', values: { notOneOf } }),
-    },
-  });
-
-  const validate = (url, urls) => {
-    const validateSchema = yup.string()
-      .trim()
-      .url()
-      .notOneOf(urls)
-      .required();
-
-    return validateSchema.validate(url);
-  };
-
-  elements.form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const url = new FormData(elements.form).get('url');
-    const feedsURLs = watchedState.feeds.map(({ link }) => link);
-    watchedState.status = 'loading';
-    validate(url, feedsURLs)
-      .then(() => {
-        getRequest(url, watchedState);
-      })
-      .catch((err) => {
-        const [error] = err.errors;
-        const { key } = error;
-        watchedState.form.error = key;
-        watchedState.status = 'failed';
+      yup.setLocale({
+        string: {
+          url: ({ url }) => ({ key: 'notValidURL', values: { url } }),
+        },
+        mixed: {
+          notOneOf: ({ notOneOf }) => ({ key: 'oneOfFeeds', values: { notOneOf } }),
+        },
       });
-    elements.form.reset();
-  });
 
-  elements.posts.addEventListener('click', (e) => {
-    const { target } = e;
-    const { dataset: { id } } = target;
-    if (id) {
-      watchedState.readPostsIds.add(id);
-      watchedState.selectedPostId = id;
-    }
-  });
+      const validate = (url, urls) => {
+        const validateSchema = yup.string()
+          .trim()
+          .url()
+          .notOneOf(urls)
+          .required();
+        return validateSchema.validate(url);
+      };
 
-  updateRSS(watchedState);
+      elements.form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const url = new FormData(elements.form).get('url');
+        const feedsURLs = watchedState.feeds.map(({ link }) => link);
+        watchedState.status = 'loading';
+        validate(url, feedsURLs)
+          .then(() => {
+            getRequest(url, watchedState);
+          })
+          .catch((err) => {
+            const [error] = err.errors;
+            const { key } = error;
+            watchedState.form.error = key;
+            watchedState.status = 'failed';
+          });
+        elements.form.reset();
+      });
+
+      elements.posts.addEventListener('click', (e) => {
+        const { target } = e;
+        const { dataset: { id } } = target;
+        if (id) {
+          watchedState.readPostsIds.add(id);
+          watchedState.selectedPostId = id;
+        }
+      });
+
+      updateRSS(watchedState);
+    });
 };
