@@ -119,6 +119,7 @@ export default (state, i18n, elements) => {
         }
         if (value === 'failed') {
           feedbackRender(state.error, 'error', i18n, elements);
+          elements.submit.disabled = false;
         }
         break;
       case 'feeds':
