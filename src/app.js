@@ -50,11 +50,11 @@ const getRequest = (url, watchedState) => {
     })
     .catch((err) => {
       if (err.isAxiosError) {
-        watchedState.form.error = 'networkError';
+        watchedState.error = 'networkError';
       } else if (err.isParserError) {
-        watchedState.form.error = 'parserError';
+        watchedState.error = 'parserError';
       } else {
-        watchedState.form.error = 'unknowError';
+        watchedState.error = 'unknowError';
       }
       watchedState.status = 'failed';
     });
@@ -69,9 +69,7 @@ export default () => {
     .then(() => {
       const initialState = {
         status: 'filling',
-        form: {
-          error: null,
-        },
+        error: null,
         feeds: [],
         posts: [],
         selectedPostId: null,
@@ -122,7 +120,7 @@ export default () => {
           .catch((err) => {
             const [error] = err.errors;
             const { key } = error;
-            watchedState.form.error = key;
+            watchedState.error = key;
             watchedState.status = 'failed';
           });
         elements.form.reset();

@@ -21,7 +21,7 @@ const feedbackRender = (value, type, i18n, elements) => {
   elements.feedback.textContent = i18n.t(`${type}.${value}`);
 };
 
-const containerRender = (containerName, i18n) => {
+const containerRender = (containerName, container, i18n) => {
   const card = document.createElement('div');
   card.classList.add('card', 'border-0');
   card.innerHTML = '';
@@ -38,7 +38,6 @@ const containerRender = (containerName, i18n) => {
 
   card.append(cardBody, list);
 
-  const container = document.querySelector(`.${containerName}`);
   container.innerHTML = '';
   container.append(card);
 };
@@ -56,7 +55,7 @@ const modalRender = (id, posts, elements) => {
 };
 
 const feedsRender = (feeds, i18n, elements) => {
-  containerRender('feeds', i18n);
+  containerRender('feeds', elements.feeds, i18n);
 
   const feedsList = elements.feeds.querySelector('.card ul');
 
@@ -76,7 +75,7 @@ const feedsRender = (feeds, i18n, elements) => {
 };
 
 const postsRender = (posts, readPostsIds, i18n, elements) => {
-  containerRender('posts', i18n);
+  containerRender('posts', elements.posts, i18n);
 
   const postsList = elements.posts.querySelector('.card ul');
 
@@ -119,7 +118,7 @@ export default (state, i18n, elements) => {
           elements.submit.disabled = false;
         }
         if (value === 'failed') {
-          feedbackRender(state.form.error, 'error', i18n, elements);
+          feedbackRender(state.error, 'error', i18n, elements);
         }
         break;
       case 'feeds':
